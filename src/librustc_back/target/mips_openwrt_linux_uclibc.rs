@@ -23,7 +23,7 @@ pub fn target() -> TargetResult {
         options: TargetOptions {
             cpu: "mips32".to_string(),
             features: "+mips32".to_string(),
-            linker "mips-openwrt-linux-uclibc-gcc".to_string(),
+            linker: "mips-openwrt-linux-uclibc-gcc".to_string(),
             max_atomic_width: Some(32),
 
             // see #36994
