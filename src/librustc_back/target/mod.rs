@@ -203,6 +203,9 @@ supported_targets! {
     ("thumbv7m-none-eabi", thumbv7m_none_eabi),
     ("thumbv7em-none-eabi", thumbv7em_none_eabi),
     ("thumbv7em-none-eabihf", thumbv7em_none_eabihf),
+
+    ("armv7-openwrt-linux-uclibc", armv7_openwrt_linux_uclibc),
+    ("mips-openwrt-linux-uclibc", mips_openwrt_linux_uclibc),
 }
 
 /// Everything `rustc` knows about how to compile for a specific target.
@@ -432,8 +435,8 @@ impl Target {
                 } else {
                     Abi::C
                 }
-            },
-            abi => abi
+            }
+            abi => abi,
         }
     }
 
@@ -458,19 +461,18 @@ impl Target {
 
         let get_req_field = |name: &str| {
             match obj.find(name)
-                     .map(|s| s.as_string())
-                     .and_then(|os| os.map(|s| s.to_string())) {
+                .map(|s| s.as_string())
+                .and_then(|os| os.map(|s| s.to_string())) {
                 Some(val) => Ok(val),
-                None => {
-                    return Err(format!("Field {} in target specification is required", name))
-                }
+                None => return Err(format!("Field {} in target specification is required", name)),
             }
         };
 
         let get_opt_field = |name: &str, default: &str| {
-            obj.find(name).and_then(|s| s.as_string())
-               .map(|s| s.to_string())
-               .unwrap_or(default.to_string())
+            obj.find(name)
+                .and_then(|s| s.as_string())
+                .map(|s| s.to_string())
+                .unwrap_or(default.to_string())
         };
 
         let mut base = Target {
@@ -584,12 +586,12 @@ impl Target {
                     Some(abi) => {
                         if abi.generic() {
                             return Err(format!("The ABI \"{}\" is considered to be supported on \
-                                                all targets and cannot be blacklisted", abi))
+                                                all targets and cannot be blacklisted", abi));
                         }
 
                         base.options.abi_blacklist.push(abi)
                     }
-                    None => return Err(format!("Unknown ABI \"{}\" in target specification", name))
+                    None => return Err(format!("Unknown ABI \"{}\" in target specification", name)),
                 }
             }
         }
@@ -615,13 +617,12 @@ impl Target {
             let mut f = File::open(path).map_err(|e| e.to_string())?;
             let mut contents = Vec::new();
             f.read_to_end(&mut contents).map_err(|e| e.to_string())?;
-            let obj = json::from_reader(&mut &contents[..])
-                           .map_err(|e| e.to_string())?;
+            let obj = json::from_reader(&mut &contents[..]).map_err(|e| e.to_string())?;
             Target::from_json(obj)
         }
 
         if let Ok(t) = load_specific(target) {
-            return Ok(t)
+            return Ok(t);
         }
 
         let path = Path::new(target);
@@ -636,13 +637,12 @@ impl Target {
             PathBuf::from(target)
         };
 
-        let target_path = env::var_os("RUST_TARGET_PATH")
-                              .unwrap_or(OsString::new());
+        let target_path = env::var_os("RUST_TARGET_PATH").unwrap_or(OsString::new());
 
         // FIXME 16351: add a sane default search path?
 
         for dir in env::split_paths(&target_path) {
-            let p =  dir.join(&path);
+            let p = dir.join(&path);
             if p.is_file() {
                 return load_file(&p);
             }
@@ -738,9 +738,14 @@ impl ToJson for Target {
         target_option_val!(panic_strategy);
 
         if default.abi_blacklist != self.options.abi_blacklist {
-            d.insert("abi-blacklist".to_string(), self.options.abi_blacklist.iter()
-                .map(Abi::name).map(|name| name.to_json())
-                .collect::<Vec<_>>().to_json());
+            d.insert("abi-blacklist".to_string(),
+                     self.options
+                         .abi_blacklist
+                         .iter()
+                         .map(Abi::name)
+                         .map(|name| name.to_json())
+                         .collect::<Vec<_>>()
+                         .to_json());
         }
 
         Json::Object(d)
