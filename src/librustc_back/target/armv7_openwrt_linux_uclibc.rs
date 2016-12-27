@@ -25,7 +25,6 @@ pub fn target() -> TargetResult {
 
         options: TargetOptions {
             features: "+v6".to_string(),
-            cpu: "cortex-a9".to_string(),
             linker: "arm-openwrt-linux-uclibcgnueabi-gcc".to_string(),
 
             // see #36994
