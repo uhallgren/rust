@@ -24,7 +24,7 @@ pub fn target() -> TargetResult {
         target_vendor: "unknown".to_string(),
 
         options: TargetOptions {
-            features: "+v6".to_string(),
+            features: "+v7".to_string(),
             linker: "arm-openwrt-linux-uclibcgnueabi-gcc".to_string(),
 
             // see #36994
