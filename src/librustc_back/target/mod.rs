@@ -48,7 +48,7 @@ use serialize::json::{Json, ToJson};
 use std::collections::BTreeMap;
 use std::default::Default;
 use std::io::prelude::*;
-use syntax::abi::{Abi, lookup as lookup_abi};
+use syntax::abi::{lookup as lookup_abi, Abi};
 
 use {LinkerFlavor, PanicStrategy, RelroLevel};
 
@@ -225,6 +225,9 @@ supported_targets! {
     ("thumbv7em-none-eabihf", thumbv7em_none_eabihf),
 
     ("msp430-none-elf", msp430_none_elf),
+
+    ("armv7-openwrt-linux-uclibc", armv7_openwrt_linux_uclibc),
+    ("mips-openwrt-linux-uclibc", mips_openwrt_linux_uclibc),
 }
 
 /// Everything `rustc` knows about how to compile for a specific target.
@@ -433,7 +436,9 @@ impl Default for TargetOptions {
     fn default() -> TargetOptions {
         TargetOptions {
             is_builtin: false,
-            linker: option_env!("CFG_DEFAULT_LINKER").unwrap_or("cc").to_string(),
+            linker: option_env!("CFG_DEFAULT_LINKER")
+                .unwrap_or("cc")
+                .to_string(),
             ar: option_env!("CFG_DEFAULT_AR").unwrap_or("ar").to_string(),
             pre_link_args: LinkArgs::new(),
             post_link_args: LinkArgs::new(),
@@ -494,14 +499,12 @@ impl Target {
     /// Given a function ABI, turn "System" into the correct ABI for this target.
     pub fn adjust_abi(&self, abi: Abi) -> Abi {
         match abi {
-            Abi::System => {
-                if self.options.is_like_windows && self.arch == "x86" {
-                    Abi::Stdcall
-                } else {
-                    Abi::C
-                }
+            Abi::System => if self.options.is_like_windows && self.arch == "x86" {
+                Abi::Stdcall
+            } else {
+                Abi::C
             },
-            abi => abi
+            abi => abi,
         }
     }
 
@@ -514,7 +517,9 @@ impl Target {
     /// Maximum integer size in bits that this target can perform atomic
     /// operations on.
     pub fn max_atomic_width(&self) -> u64 {
-        self.options.max_atomic_width.unwrap_or(self.target_pointer_width.parse().unwrap())
+        self.options
+            .max_atomic_width
+            .unwrap_or(self.target_pointer_width.parse().unwrap())
     }
 
     pub fn is_abi_supported(&self, abi: Abi) -> bool {
@@ -530,21 +535,24 @@ impl Target {
         // are round-tripped through this code to catch cases where
         // the JSON parser is not updated to match the structs.
 
-        let get_req_field = |name: &str| {
-            match obj.find(name)
-                     .map(|s| s.as_string())
-                     .and_then(|os| os.map(|s| s.to_string())) {
-                Some(val) => Ok(val),
-                None => {
-                    return Err(format!("Field {} in target specification is required", name))
-                }
+        let get_req_field = |name: &str| match obj.find(name)
+            .map(|s| s.as_string())
+            .and_then(|os| os.map(|s| s.to_string()))
+        {
+            Some(val) => Ok(val),
+            None => {
+                return Err(format!(
+                    "Field {} in target specification is required",
+                    name
+                ))
             }
         };
 
         let get_opt_field = |name: &str, default: &str| {
-            obj.find(name).and_then(|s| s.as_string())
-               .map(|s| s.to_string())
-               .unwrap_or(default.to_string())
+            obj.find(name)
+                .and_then(|s| s.as_string())
+                .map(|s| s.to_string())
+                .unwrap_or(default.to_string())
         };
 
         let mut base = Target {
@@ -556,10 +564,9 @@ impl Target {
             target_os: get_req_field("os")?,
             target_env: get_opt_field("env", ""),
             target_vendor: get_opt_field("vendor", "unknown"),
-            linker_flavor: LinkerFlavor::from_str(&*get_req_field("linker-flavor")?)
-                .ok_or_else(|| {
-                    format!("linker flavor must be {}", LinkerFlavor::one_of())
-                })?,
+            linker_flavor: LinkerFlavor::from_str(&*get_req_field("linker-flavor")?).ok_or_else(
+                || format!("linker flavor must be {}", LinkerFlavor::one_of()),
+            )?,
             options: Default::default(),
         };
 
@@ -730,13 +737,16 @@ impl Target {
                 match lookup_abi(name) {
                     Some(abi) => {
                         if abi.generic() {
-                            return Err(format!("The ABI \"{}\" is considered to be supported on \
-                                                all targets and cannot be blacklisted", abi))
+                            return Err(format!(
+                                "The ABI \"{}\" is considered to be supported on \
+                                 all targets and cannot be blacklisted",
+                                abi
+                            ));
                         }
 
                         base.options.abi_blacklist.push(abi)
                     }
-                    None => return Err(format!("Unknown ABI \"{}\" in target specification", name))
+                    None => return Err(format!("Unknown ABI \"{}\" in target specification", name)),
                 }
             }
         }
@@ -762,13 +772,12 @@ impl Target {
             let mut f = File::open(path).map_err(|e| e.to_string())?;
             let mut contents = Vec::new();
             f.read_to_end(&mut contents).map_err(|e| e.to_string())?;
-            let obj = json::from_reader(&mut &contents[..])
-                           .map_err(|e| e.to_string())?;
+            let obj = json::from_reader(&mut &contents[..]).map_err(|e| e.to_string())?;
             Target::from_json(obj)
         }
 
         if let Ok(t) = load_specific(target) {
-            return Ok(t)
+            return Ok(t);
         }
 
         let path = Path::new(target);
@@ -783,19 +792,21 @@ impl Target {
             PathBuf::from(target)
         };
 
-        let target_path = env::var_os("RUST_TARGET_PATH")
-                              .unwrap_or(OsString::new());
+        let target_path = env::var_os("RUST_TARGET_PATH").unwrap_or(OsString::new());
 
         // FIXME 16351: add a sane default search path?
 
         for dir in env::split_paths(&target_path) {
-            let p =  dir.join(&path);
+            let p = dir.join(&path);
             if p.is_file() {
                 return load_file(&p);
             }
         }
 
-        Err(format!("Could not find specification for target {:?}", target))
+        Err(format!(
+            "Could not find specification for target {:?}",
+            target
+        ))
     }
 }
 
@@ -916,9 +927,16 @@ impl ToJson for Target {
         target_option_val!(stack_probes);
 
         if default.abi_blacklist != self.options.abi_blacklist {
-            d.insert("abi-blacklist".to_string(), self.options.abi_blacklist.iter()
-                .map(Abi::name).map(|name| name.to_json())
-                .collect::<Vec<_>>().to_json());
+            d.insert(
+                "abi-blacklist".to_string(),
+                self.options
+                    .abi_blacklist
+                    .iter()
+                    .map(Abi::name)
+                    .map(|name| name.to_json())
+                    .collect::<Vec<_>>()
+                    .to_json(),
+            );
         }
 
         Json::Object(d)
