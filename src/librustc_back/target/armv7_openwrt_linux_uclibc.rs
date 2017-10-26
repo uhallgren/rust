@@ -30,6 +30,8 @@ pub fn target() -> TargetResult {
             cpu: "generic".to_string(),
             max_atomic_width: Some(64),
             abi_blacklist: super::arm_base::abi_blacklist(),
+            // see #36994
+            exe_allocation_crate: None,
             ..base
         },
     })
