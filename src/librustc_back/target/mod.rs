@@ -227,6 +227,9 @@ supported_targets! {
     ("thumbv7em-none-eabihf", thumbv7em_none_eabihf),
 
     ("msp430-none-elf", msp430_none_elf),
+    
+    ("armv7-openwrt-linux-uclibc", armv7_openwrt_linux_uclibc),
+    ("mips-openwrt-linux-uclibc", mips_openwrt_linux_uclibc),
 }
 
 /// Everything `rustc` knows about how to compile for a specific target.
