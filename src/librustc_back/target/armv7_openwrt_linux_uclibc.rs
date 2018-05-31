@@ -12,7 +12,7 @@ use LinkerFlavor;
 use target::{Target, TargetOptions, TargetResult};
 
 pub fn target() -> TargetResult {
-    let base = super::linux_base::opts();
+    let mut base = super::linux_base::opts();
     base.max_atomic_width = Some(64);
     Ok(Target {
         llvm_target: "arm-unknown-linux-gnueabi".to_string(),
