@@ -35,9 +35,10 @@ impl Command {
 
         let (ours, theirs) = self.setup_io(default, needs_stdin)?;
 
-        if let Some(ret) = self.posix_spawn(&theirs, envp.as_ref())? {
-            return Ok((ret, ours))
-        }
+        // This does not work on OpenWRT
+        // if let Some(ret) = self.posix_spawn(&theirs, envp.as_ref())? {
+        //     return Ok((ret, ours))
+        // }
 
         let (input, output) = sys::pipe::anon_pipe()?;
 
