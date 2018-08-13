@@ -241,7 +241,7 @@ target = ["x86_64-unknown-linux-gnu","armv7-openwrt-linux-uclibc","mips-openwrt-
 # The "channel" for the Rust build to produce. The stable/beta channels only
 # allow using stable features, whereas the nightly and dev channels allow using
 # nightly features
-channel = "nightly"
+channel = "stable"
 
 # By default the `rustc` executable is built with `-Wl,-rpath` flags on Unix
 # platforms to ensure that the compiler is usable by default from the build
