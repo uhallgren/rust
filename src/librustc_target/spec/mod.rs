@@ -373,6 +373,9 @@ supported_targets! {
     ("armv7-unknown-cloudabi-eabihf", armv7_unknown_cloudabi_eabihf),
     ("i686-unknown-cloudabi", i686_unknown_cloudabi),
     ("x86_64-unknown-cloudabi", x86_64_unknown_cloudabi),
+    
+    ("armv7-openwrt-linux-uclibc", armv7_openwrt_linux_uclibc),
+    ("mips-openwrt-linux-uclibc", mips_openwrt_linux_uclibc),
 }
 
 /// Everything `rustc` knows about how to compile for a specific target.
