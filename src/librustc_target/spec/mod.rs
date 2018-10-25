@@ -412,6 +412,9 @@ supported_targets! {
     ("riscv32imac-unknown-none-elf", riscv32imac_unknown_none_elf),
 
     ("aarch64-unknown-none", aarch64_unknown_none),
+    
+    ("armv7-openwrt-linux-uclibc", armv7_openwrt_linux_uclibc),
+    ("mips-openwrt-linux-uclibc", mips_openwrt_linux_uclibc),
 }
 
 /// Everything `rustc` knows about how to compile for a specific target.
